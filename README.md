@@ -20,53 +20,55 @@
 -->
 
 # IoTDB-OPC-Server
-The Outer OPC UA Server for Apache IoTDB OPC UA sink client, which is a classical OPC UA Server using Eclipse Milo with `addNodes` function implemented. The docs can refer to the official website
-of OPC foundation: https://www.opcfoundation.cn/developer-tools/specifications-unified-architecture/part-4-services
+A standalone OPC UA server designed for the Apache IoTDB OPC UA sink client, which is a classical OPC UA Server using Eclipse Milo with `addNodes` function implemented.
+
+**The official document of OPC foundation:**
+[OPC Foundation Services docs](https://www.opcfoundation.cn/developer-tools/specifications-unified-architecture/part-4-services)
+
+## Quick Start
 
 To start this server, you can simply run it in IDEA with program arguments, or package this and start in an outer environment.
 
 ```shell
 # package
 mvn clean package -P get-jar-with-dependencies
-```
-```shell
+
 # cd directory
 cd target
-```
-```shell
+
 # run server
 java -jar iotdb_opc_server-0.0.1-jar-with-dependencies.jar
 ```
 
-When you start the server, you can also inject some parameters into it, run this to see the details.
-
-```shell
-# run server
-java -jar iotdb_opc_server-0.0.1-jar-with-dependencies.jar -help
-```
-Then the output is as follows:
-```text
-For more information, please check the following hint.
-usage: java -jar iotdb_opc_server-0.0.1-jar-with-dependencies.jar
-       [-enable_anonymous_access] [-help] [-https_port <https_port>] [-pw <password>]
-       [-security_dir <security_dir>] [-tcp_port <tcp_port>] -u <username>
- -enable_anonymous_access       Whether to enable anonymous access of this server.
-                                Default is true. (optional)
- -help                          Display help information. (optional)
- -https_port <https_port>       Https Port. Default is 8443. (optional)
- -pw,--password <password>      Password. Default is root. (optional)
- -security_dir <security_dir>   Security directory of OPC Server. Default is
-                                C:\Users\13361\iotdb_opc_server_security. (optional)
- -tcp_port <tcp_port>           TCP Port. Default is 12686. (optional)
- -u,--user <username>           User name, default is root. (optional)
-```
-
-
 You can use this SQL in an outer IoTDB in tree model to connect with this server.
 
 ```sql
-IoTDB> create pipe opc ('sink'='opc-ua-sink', 'node-url'='<node-url specified>', 'with-quality'='true')
+IoTDB> create pipe opc ('sink'='opc-ua-sink', 'node-url'='opc.tcp://<your_ip>:12686/iotdb', 'with-quality'='true')
 ```
-This SQL will push any IoTDB data to this server, which will reflect on IoTDB paths with the newest data. 
+This SQL will push any IoTDB data to this server, which will reflect on IoTDB paths with the newest data.
 
-**NOTE: You may use this server's add node function with other clients, but currently this just supports object nodes and measurement nodes.**
+## Parameter Description
+
+The parameters as follows:
+
+| Parameter                | Description                                      | Default                                |
+|:-------------------------|:-------------------------------------------------|:---------------------------------------|
+| -https_port              | Https Port                                       | 8443                                   |
+| -tcp_port                | TCP Port.                                        | 12686                                  |
+| -u,--user                | User name                                        | root                                   |
+| -pw,--password           | Password                                         | root                                   |
+| -enable_anonymous_access | Whether to enable anonymous access of OPC Server | true                                   |
+| -security_dir            | Directory to store security certificates.        | ${user.home}/iotdb_opc_server_security |
+| -help                    | Display this help message and exit.              | /                                      |
+
+When you start the server, you can also inject some parameters into it, run this to see the details.
+
+```shell
+java -jar iotdb_opc_server-0.0.1-jar-with-dependencies.jar -help
+```
+
+## Supplement
+
+You may use this server's add node function with other clients.
+
+**Note: Currently, the 'add node' function only supports object nodes and measurement nodes.**
