@@ -61,7 +61,25 @@ Hence, when a OPC Sink client newly connects with the server, you shall move the
 mv ${HOME}/iotdb_opc_server_security/pki/rejected/* ${HOME}/iotdb_opc_server_security/pki/trusted/certs
 ```
 
-Then you should connect the server again
+Then you should connect the server again with the same SQL in IoTDB:
+
+```sql
+IoTDB> create pipe opc ('sink'='opc-ua-sink', 'node-url'='opc.tcp://<your_ip>:12686/iotdb', 'with-quality'='true')
+```
+
+Then, you shall trust the server's certificate in IoTDB client: 
+```bash
+# package
+mv ${IOTDB_HOME}/conf/opc_security/8443_12686/pki/rejected/* ${IOTDB_HOME}/conf/opc_security/8443_12686/pki/trusted/certs
+```
+
+Then the connection can be established with the same SQL:
+
+```sql
+IoTDB> create pipe opc ('sink'='opc-ua-sink', 'node-url'='opc.tcp://<your_ip>:12686/iotdb', 'with-quality'='true')
+```
+
+**Note: You do not need to configure this again if the client and server have already trusted the other.**
 
 ## Parameter Description
 

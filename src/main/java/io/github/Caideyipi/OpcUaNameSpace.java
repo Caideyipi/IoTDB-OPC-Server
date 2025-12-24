@@ -73,7 +73,8 @@ public class OpcUaNameSpace extends ManagedNamespaceWithLifecycle {
   }
 
   @Override
-  public void addNodes(final AddNodesContext context, final List<AddNodesItem> nodesToAdd) {
+  public synchronized void addNodes(
+      final AddNodesContext context, final List<AddNodesItem> nodesToAdd) {
     final List<AddNodesResult> results = new ArrayList<>(nodesToAdd.size());
     for (final AddNodesItem item : nodesToAdd) {
       // Check attributes
