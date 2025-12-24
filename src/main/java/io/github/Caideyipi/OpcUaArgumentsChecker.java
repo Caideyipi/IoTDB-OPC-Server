@@ -91,7 +91,9 @@ public class OpcUaArgumentsChecker {
         .setSecurityDir(getStringOptionsOrDefault(SECURITY_DIR_KEY, SECURITY_DIR_DEFAULT_VALUE))
         .setTcpBindPort(getIntOptionOrDefault(TCP_BIND_PORT_KEY, TCP_BIND_PORT_DEFAULT_VALUE))
         .setHttpsBindPort(getIntOptionOrDefault(HTTPS_BIND_PORT_KEY, HTTPS_BIND_PORT_DEFAULT_VALUE))
-        .setEnableAnonymousAccess(enableAnonymousAccess);
+        .setEnableAnonymousAccess(
+            getBooleanOptionOrDefault(
+                ENABLE_ANONYMOUS_ACCESS_KEY, ENABLE_ANONYMOUS_ACCESS_DEFAULT_VALUE));
   }
 
   private static Options createOptions() {
@@ -149,6 +151,7 @@ public class OpcUaArgumentsChecker {
         .addOption(
             Option.builder(ENABLE_ANONYMOUS_ACCESS_KEY)
                 .argName(ENABLE_ANONYMOUS_ACCESS_KEY)
+                .hasArg(true)
                 .optionalArg(true)
                 .desc(
                     String.format(
@@ -185,5 +188,10 @@ public class OpcUaArgumentsChecker {
   private static int getIntOptionOrDefault(final String arg, final int defaultValue) {
     final String str = commandLine.getOptionValue(arg);
     return Objects.nonNull(str) ? Integer.parseInt(str) : defaultValue;
+  }
+
+  private static boolean getBooleanOptionOrDefault(final String arg, final boolean defaultValue) {
+    final String str = commandLine.getOptionValue(arg);
+    return Objects.nonNull(str) ? Boolean.parseBoolean(str) : defaultValue;
   }
 }
