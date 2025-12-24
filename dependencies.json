@@ -1,0 +1,32 @@
+{
+  "dependencies": [
+    "ch.qos.logback:logback-classic",
+    "ch.qos.logback:logback-core",
+    "com.google.guava:failureaccess",
+    "com.google.guava:guava",
+    "com.google.guava:listenablefuture",
+    "com.sun.istack:istack-commons-runtime",
+    "commons-cli:commons-cli",
+    "io.netty:netty-buffer",
+    "io.netty:netty-codec",
+    "io.netty:netty-codec-http",
+    "io.netty:netty-common",
+    "io.netty:netty-handler",
+    "io.netty:netty-resolver",
+    "io.netty:netty-transport",
+    "io.netty:netty-transport-native-unix-common",
+    "jakarta.xml.bind:jakarta.xml.bind-api",
+    "org.bouncycastle:bcpkix-jdk18on",
+    "org.bouncycastle:bcprov-jdk18on",
+    "org.bouncycastle:bcutil-jdk18on",
+    "org.eclipse.milo:bsd-core",
+    "org.eclipse.milo:bsd-generator",
+    "org.eclipse.milo:sdk-core",
+    "org.eclipse.milo:sdk-server",
+    "org.eclipse.milo:stack-core",
+    "org.eclipse.milo:stack-server",
+    "org.glassfish.jaxb:jaxb-runtime",
+    "org.glassfish.jaxb:txw2",
+    "org.slf4j:slf4j-api"
+  ]
+}

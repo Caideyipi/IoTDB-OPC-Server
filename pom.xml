@@ -1,0 +1,956 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>io.github.Caideyipi</groupId>
+    <artifactId>iotdb_opc_server</artifactId>
+    <version>0.0.1</version>
+    <packaging>jar</packaging>
+    <name>IoTDB OPC Server POM</name>
+    <description>The project of IoTDB OPC Server.</description>
+    <properties>
+        <logback.version>1.3.16</logback.version>
+        <maven.assembly.version>3.6.0</maven.assembly.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <commons-cli.version>1.5.0</commons-cli.version>
+        <milo.version>0.6.14</milo.version>
+        <!-- Override this to `true`, if you want to disable spotless -->
+        <spotless.skip>false</spotless.skip>
+        <spotless.version>2.43.0</spotless.version>
+        <google.java.format.version>1.22.0</google.java.format.version>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.eclipse.milo</groupId>
+            <artifactId>sdk-server</artifactId>
+            <version>${milo.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.sun.activation</groupId>
+                    <artifactId>jakarta.activation</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.milo</groupId>
+            <artifactId>sdk-core</artifactId>
+            <version>${milo.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.sun.activation</groupId>
+                    <artifactId>jakarta.activation</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.milo</groupId>
+            <artifactId>stack-core</artifactId>
+            <version>${milo.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.sun.activation</groupId>
+                    <artifactId>jakarta.activation</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-cli</groupId>
+            <artifactId>commons-cli</artifactId>
+            <version>${commons-cli.version}</version>
+        </dependency>
+    </dependencies>
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.5.0</version>
+                    <configuration>
+                        <excludePackageNames>*thrift*</excludePackageNames>
+                        <!--
+              This will suppress the generation of a hidden timestamp at the top of each generated html page
+              and hopefully let the site generation nod to too big updates every time.
+            -->
+                        <notimestamp>true</notimestamp>
+                        <!--Don't fail the build, just because there were issues in the JavaDoc generation.-->
+                        <failOnError>false</failOnError>
+                    </configuration>
+                </plugin>
+                <!--
+          We need to increase the memory available to tests as we were
+          getting out-of-memory errors when building on windows machines.
+        -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.1.2</version>
+                    <configuration>
+                        <argLine>${argLine} -Xmx1024m</argLine>
+                        <!-- Force the working directory to be different for each fork, so forks don't trample each other -->
+                        <workingDirectory>${project.build.directory}/fork_${surefire.forkNumber}</workingDirectory>
+                    </configuration>
+                </plugin>
+                <!--
+          Plugin for doing the code analysis.
+        -->
+                <plugin>
+                    <groupId>org.sonarsource.scanner.maven</groupId>
+                    <artifactId>sonar-maven-plugin</artifactId>
+                    <version>3.9.1.2184</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.rat</groupId>
+                    <artifactId>apache-rat-plugin</artifactId>
+                    <version>0.16.1</version>
+                    <configuration>
+                        <consoleOutput>true</consoleOutput>
+                        <excludes>
+                            <!-- Git related files -->
+                            <exclude>**/.git/**</exclude>
+                            <exclude>**/.mvn/**</exclude>
+                            <exclude>**/.gitignore</exclude>
+                            <exclude>**/.gitmodules</exclude>
+                            <exclude>**/.git-blame-ignore-revs</exclude>
+                            <exclude>**/git.properties</exclude>
+                            <!-- Maven related files -->
+                            <exclude>**/target/**</exclude>
+                            <!-- Eclipse related files -->
+                            <exclude>**/.project</exclude>
+                            <exclude>**/.settings/**</exclude>
+                            <exclude>**/.classpath</exclude>
+                            <!-- IntelliJ related files -->
+                            <exclude>**/.idea/**</exclude>
+                            <exclude>**/*.iml</exclude>
+                            <!-- Runtime log -->
+                            <exclude>**/*.log</exclude>
+                            <!-- Exclude CVS files -->
+                            <exclude>**/*.cvs</exclude>
+                            <!-- licenses -->
+                            <exclude>licenses/*</exclude>
+                            <!-- only for Travis CI with WinOS-->
+                            <exclude>hadoopbin</exclude>
+                            <exclude>windowssystem32</exclude>
+                            <exclude>.ignore</exclude>
+                            <!-- generated by Github -->
+                            <exclude>**/.github/**</exclude>
+                            <!-- figures -->
+                            <exclude>**/.eps</exclude>
+                            <exclude>**/.png</exclude>
+                            <exclude>**/.jpg</exclude>
+                            <exclude>**/.jpeg</exclude>
+                            <!--Generated by Apache Release -->
+                            <exclude>local-snapshots-dir/**</exclude>
+                            <!-- visualization plans -->
+                            <exclude>**/*.plan</exclude>
+                            <exclude>**/NOTICE-binary</exclude>
+                            <exclude>**/LICENSE-binary</exclude>
+                            <!-- json does not support comments-->
+                            <exclude>**/*.json</exclude>
+                            <!-- the zeppelin export file format-->
+                            <exclude>**/*.zpln</exclude>
+                            <!-- python -->
+                            <exclude>.pytest_cache/**</exclude>
+                            <exclude>**/venv/**</exclude>
+                            <exclude>**/thrift/**/__init__.py</exclude>
+                            <!-- Java SPI uses files in resources/META-INF/services-->
+                            <exclude>**/resources/META-INF/services/**</exclude>
+                            <!-- site-->
+                            <exclude>**/redirects</exclude>
+                            <exclude>**/.eslintignore</exclude>
+                            <exclude>**/palette.styl</exclude>
+                            <exclude>**/RightMenu.vue</exclude>
+                            <exclude>**/pnpm-lock.yaml</exclude>
+                            <!-- This is generated by the IntelliJ Antlr Plugin -->
+                            <exclude>**/db/qp/sql/gen/**</exclude>
+                            <exclude>**/ainode-example/**</exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>com.diffplug.spotless</groupId>
+                    <artifactId>spotless-maven-plugin</artifactId>
+                    <version>${spotless.version}</version>
+                    <configuration>
+                        <java>
+                            <googleJavaFormat>
+                                <version>${google.java.format.version}</version>
+                                <style>GOOGLE</style>
+                            </googleJavaFormat>
+                            <importOrder>
+                                <order>com.iotdb_opc_server,,javax,java,\#</order>
+                            </importOrder>
+                            <removeUnusedImports/>
+                        </java>
+                        <lineEndings>UNIX</lineEndings>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>spotless-check</id>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                            <phase>validate</phase>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>com.googlecode.maven-download-plugin</groupId>
+                    <artifactId>download-maven-plugin</artifactId>
+                    <version>1.7.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>com.googlecode.cmake-maven-project</groupId>
+                    <artifactId>cmake-maven-plugin</artifactId>
+                    <version>3.29.3-b2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.4.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.eluder.coveralls</groupId>
+                    <artifactId>coveralls-maven-plugin</artifactId>
+                    <version>4.3.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>3.4.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>net.revelc.code.formatter</groupId>
+                    <artifactId>formatter-maven-plugin</artifactId>
+                    <version>2.23.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <version>3.3.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.2.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>3.1.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>${maven.assembly.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.cyclonedx</groupId>
+                    <artifactId>cyclonedx-maven-plugin</artifactId>
+                    <version>2.7.11</version>
+                </plugin>
+                <plugin>
+                    <groupId>net.nicoulaj.maven.plugins</groupId>
+                    <artifactId>checksum-maven-plugin</artifactId>
+                    <version>1.11</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>0.8.12</version>
+                </plugin>
+                <plugin>
+                    <groupId>com.coderplus.maven.plugins</groupId>
+                    <artifactId>copy-rename-maven-plugin</artifactId>
+                    <version>1.0.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>3.5.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>3.3.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>3.6.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.thrift</groupId>
+                    <artifactId>thrift-maven-plugin</artifactId>
+                    <version>0.10.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>com.bazaarvoice.maven.plugins</groupId>
+                    <artifactId>process-exec-maven-plugin</artifactId>
+                    <version>0.9</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>3.4.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.felix</groupId>
+                    <artifactId>maven-bundle-plugin</artifactId>
+                    <version>${felix.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.antlr</groupId>
+                    <artifactId>antlr4-maven-plugin</artifactId>
+                    <version>${antlr4.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.drill.tools</groupId>
+                    <artifactId>drill-fmpp-maven-plugin</artifactId>
+                    <version>${drill.freemarker.maven.plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <version>3.3.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>pl.project13.maven</groupId>
+                    <artifactId>git-commit-id-plugin</artifactId>
+                    <version>4.9.10</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.openapitools</groupId>
+                    <artifactId>openapi-generator-maven-plugin</artifactId>
+                    <version>${openapi.generator.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>au.com.acegi</groupId>
+                    <artifactId>xml-format-maven-plugin</artifactId>
+                    <version>3.2.2</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <configuration>
+                    <skip>${spotless.skip}</skip>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.eluder.coveralls</groupId>
+                <artifactId>coveralls-maven-plugin</artifactId>
+                <configuration>
+                    <jacocoReports>
+                        <jacocoReport>code-coverage/target/jacoco-merged-reports/jacoco.xml</jacocoReport>
+                    </jacocoReports>
+                    <sourceEncoding>UTF-8</sourceEncoding>
+                </configuration>
+                <!-- JDK11 removes the following libs. We have to add them-->
+                <dependencies>
+                    <dependency>
+                        <groupId>javax.xml.bind</groupId>
+                        <artifactId>jaxb-api</artifactId>
+                        <version>2.4.0-b180830.0359</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>com.sun.xml.bind</groupId>
+                        <artifactId>jaxb-core</artifactId>
+                        <version>2.3.0.1</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>com.sun.xml.bind</groupId>
+                        <artifactId>jaxb-impl</artifactId>
+                        <version>2.3.6</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <!--
+        Strange things usually happen if you run with a too low Java version.
+        This plugin not only checks the minimum java version of 1.8, but also
+        checks all dependencies (and transitive dependencies) for reported CVEs.
+      -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.sonatype.ossindex.maven</groupId>
+                        <artifactId>ossindex-maven-enforcer-rules</artifactId>
+                        <version>3.2.0</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>extra-enforcer-rules</artifactId>
+                        <version>1.7.0</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.apache.maven.shared</groupId>
+                        <artifactId>maven-dependency-tree</artifactId>
+                        <version>3.2.1</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <!-- Ensure we're not mixing dependency versions -->
+                    <execution>
+                        <id>enforce-version-convergence</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <phase>validate</phase>
+                        <configuration>
+                            <rules>
+                                <dependencyConvergence/>
+                            </rules>
+                        </configuration>
+                    </execution>
+                    <!--
+            Fails the build if classes are included from multiple
+            artifacts and these are not identical.
+          -->
+                    <execution>
+                        <id>enforce-ban-duplicate-classes</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <banDuplicateClasses>
+                                    <scopes>
+                                        <scope>compile</scope>
+                                        <scope>provided</scope>
+                                    </scopes>
+                                    <findAllDuplicates>true</findAllDuplicates>
+                                    <ignoreWhenIdentical>true</ignoreWhenIdentical>
+                                </banDuplicateClasses>
+                            </rules>
+                            <fail>true</fail>
+                        </configuration>
+                    </execution>
+                    <!-- Make sure no dependencies are used for which known vulnerabilities exist. -->
+                    <execution>
+                        <id>vulnerability-checks</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <phase>validate</phase>
+                        <configuration>
+                            <!-- Just generate warnings for now -->
+                            <fail>true</fail>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>1.8.0</version>
+                                </requireJavaVersion>
+                                <banVulnerable implementation="org.sonatype.ossindex.maven.enforcer.BanVulnerableDependencies">
+                                    <excludeCoordinates>
+                                        <!-- TODO: For this CVE no fix exists yet (Keep an eye on it) -->
+                                        <exclude>
+                                            <groupId>io.netty</groupId>
+                                            <artifactId>netty-handler</artifactId>
+                                            <version>4.1.97.Final</version>
+                                        </exclude>
+                                        <!--
+                      CVE-2016-1000027 seems to effect the HTTP Invoker, which we are not using.
+                      These are marked deprecated anyway and are removed in Spring 6.x. Unfortunately,
+                      we are still stuck at 5.x due to the javax-namespace issues.
+                    -->
+                                        <exclude>
+                                            <groupId>org.springframework</groupId>
+                                            <artifactId>spring-web</artifactId>
+                                            <version>5.3.30</version>
+                                        </exclude>
+                                        <!--
+                      For this CVE no fix exists and will probably never exist
+                      (We should discuss dropping 2.11 anyway)
+                    -->
+                                        <exclude>
+                                            <groupId>org.apache.spark</groupId>
+                                            <artifactId>spark-core_2.11</artifactId>
+                                            <version>2.4.8</version>
+                                        </exclude>
+                                        <!--
+                      We can't update to a fixed version as we're stuck with this version
+                      as it was the last to support the javax namespace.
+                    -->
+                                        <exclude>
+                                            <groupId>org.glassfish.jersey.core</groupId>
+                                            <artifactId>jersey-common</artifactId>
+                                            <version>2.4.8</version>
+                                        </exclude>
+                                        <!--
+                      TODO: For this CVE no fix exists yet, however we should keep an eye on this:
+                      https://docs.google.com/presentation/d/1W5KU7ffh4dheR8iD54ulABImi6byAhSI-OhEKw2adRo/edit#slide=id.gaf11915f86_0_0
+                    -->
+                                        <exclude>
+                                            <groupId>io.atomix</groupId>
+                                            <artifactId>atomix-raft</artifactId>
+                                            <version>3.1.12</version>
+                                        </exclude>
+                                    </excludeCoordinates>
+                                </banVulnerable>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!--
+        Even if Maven transitively pulls in dependencies, relying on these can
+        quite often cause hard to find problems. So it's a good practice to make
+        sure everything directly required is also directly added as a dependency.
+        On the other side adding unused dependency only over-complicates the
+        dependency graph, so the maven-dependency-plugin checks we depend on
+        what we need and only that and that runtime dependencies are correctly
+        imported with runtime scope.
+      -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>check-dependencies</id>
+                        <goals>
+                            <goal>analyze-only</goal>
+                        </goals>
+                        <phase>verify</phase>
+                        <configuration>
+                            <failOnWarning>true</failOnWarning>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>net.revelc.code.formatter</groupId>
+                <artifactId>formatter-maven-plugin</artifactId>
+            </plugin>
+            <!--for code style check -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <configuration>
+                    <configLocation>checkstyle.xml</configLocation>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>9.3</version>
+                        <!-- Starting with version 10, checkstyle requires Java 11 -->
+                        <!--version>10.12.3</version-->
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <id>validate</id>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <phase>validate</phase>
+                        <configuration>
+                            <outputFile>target/checkstyle-report.xml</outputFile>
+                            <configLocation>checkstyle.xml</configLocation>
+                            <propertyExpansion>baseDir=${project.basedir}</propertyExpansion>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!--
+        Check if all files contain Apache headers in them.
+        Ignore this plugin, we use license-maven-plugin to check apache header.
+      -->
+            <plugin>
+                <groupId>org.apache.rat</groupId>
+                <artifactId>apache-rat-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>license-check</id>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <phase>verify</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>au.com.acegi</groupId>
+                <artifactId>xml-format-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>xml-format</id>
+                        <goals>
+                            <goal>xml-format</goal>
+                        </goals>
+                        <phase>compile</phase>
+                        <configuration>
+                            <!-- configure your formatting preferences here (see link below) -->
+                            <indentSize>4</indentSize>
+                            <excludes>
+                                <exclude>**/target/**</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!--
+        Generate the legally required text files in the jars
+      -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-remote-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>process-resource-bundles</id>
+                        <goals>
+                            <goal>process</goal>
+                        </goals>
+                        <configuration>
+                            <resourceBundles>
+                                <!-- Will generate META-INF/{DEPENDENCIES,LICENSE,NOTICE} -->
+                                <resourceBundle>org.apache:apache-jar-resource-bundle:1.4</resourceBundle>
+                            </resourceBundles>
+                            <!-- Content in this directory will be appended to generated resources -->
+                            <appendedResourcesDirectory>${basedir}/src/remote-resources</appendedResourcesDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Also package the sources as jar -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>create-source-package</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+    <profiles>
+        <!--
+      A set of profiles defining the different properties needed to download and run thrift
+      They are automatically activated depending on the OS you are using.
+    -->
+        <profile>
+            <id>.os-unix</id>
+            <activation>
+                <os>
+                    <name>Linux</name>
+                    <family>unix</family>
+                    <arch>!aarch64</arch>
+                </os>
+            </activation>
+            <properties>
+                <cmake.generator>Unix Makefiles</cmake.generator>
+                <os.classifier>linux-x86_64</os.classifier>
+                <thrift.executable>thrift</thrift.executable>
+                <python.venv.bin>venv/bin/</python.venv.bin>
+                <python.exe.bin>python3</python.exe.bin>
+            </properties>
+        </profile>
+        <profile>
+            <id>.os-unix-arm</id>
+            <activation>
+                <os>
+                    <name>Linux</name>
+                    <family>unix</family>
+                    <arch>aarch64</arch>
+                </os>
+            </activation>
+            <properties>
+                <cmake.generator>Unix Makefiles</cmake.generator>
+                <os.classifier>linux-aarch64</os.classifier>
+                <thrift.executable>thrift</thrift.executable>
+                <python.venv.bin>venv/bin/</python.venv.bin>
+                <python.exe.bin>python3</python.exe.bin>
+            </properties>
+        </profile>
+        <profile>
+            <id>.os-mac</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                    <arch>!aarch64</arch>
+                </os>
+            </activation>
+            <properties>
+                <boost.include.dir>/usr/local/include</boost.include.dir>
+                <cmake.generator>Unix Makefiles</cmake.generator>
+                <os.classifier>mac-x86_64</os.classifier>
+                <thrift.executable>thrift</thrift.executable>
+                <python.venv.bin>venv/bin/</python.venv.bin>
+                <python.exe.bin>python3</python.exe.bin>
+            </properties>
+        </profile>
+        <profile>
+            <id>.os-mac-arm</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                    <arch>aarch64</arch>
+                </os>
+            </activation>
+            <properties>
+                <boost.include.dir>/opt/homebrew/opt/boost/include</boost.include.dir>
+                <cmake.generator>Unix Makefiles</cmake.generator>
+                <os.classifier>mac-aarch64</os.classifier>
+                <thrift.executable>thrift</thrift.executable>
+                <python.venv.bin>venv/bin/</python.venv.bin>
+                <python.exe.bin>python3</python.exe.bin>
+            </properties>
+        </profile>
+        <profile>
+            <id>.os-windows</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                    <arch>!aarch64</arch>
+                </os>
+            </activation>
+            <properties>
+                <!-- The generated code relied on Boost and that relies on VS and can't be built with MinGW -->
+                <cmake.generator>Visual Studio 17 2022</cmake.generator>
+                <os.classifier>windows-x86_64</os.classifier>
+                <thrift.executable>Release/thrift.exe</thrift.executable>
+                <python.venv.bin>venv/Scripts/</python.venv.bin>
+                <python.exe.bin>python</python.exe.bin>
+            </properties>
+        </profile>
+        <profile>
+            <id>.os-windows-arm</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                    <arch>aarch64</arch>
+                </os>
+            </activation>
+            <properties>
+                <!-- The generated code relied on Boost and that relies on VS and can't be built with MinGW -->
+                <cmake.generator>Visual Studio 17 2022</cmake.generator>
+                <os.classifier>windows-aarch64</os.classifier>
+                <thrift.executable>Release/thrift.exe</thrift.executable>
+                <python.venv.bin>venv/Scripts/</python.venv.bin>
+                <python.exe.bin>python</python.exe.bin>
+            </properties>
+        </profile>
+        <profile>
+            <id>.java-9-and-above</id>
+            <activation>
+                <jdk>[9,)</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.release>8</maven.compiler.release>
+                <!--
+                    Add argLine for Java 9 and above, due to
+                    [JEP 260: Encapsulate Most Internal APIs],
+                    [JEP 396: Strongly Encapsulate JDK Internals by Default],
+                    [JEP 403: Strongly Encapsulate JDK Internals]
+                -->
+                <argLine><![CDATA[
+                        --add-opens=java.base/java.lang=ALL-UNNAMED
+                        --add-opens=java.base/java.util=ALL-UNNAMED
+                        --add-opens=java.base/java.nio=ALL-UNNAMED
+                        --add-opens=java.base/java.io=ALL-UNNAMED
+                        --add-opens=java.base/java.net=ALL-UNNAMED
+                        --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
+                        --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED
+                        --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
+                        --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED
+                        --add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED
+                        --add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED
+                      ]]></argLine>
+            </properties>
+        </profile>
+        <!-- Current version of spotless cannot support JDK11 below -->
+        <profile>
+            <id>.java-11-below</id>
+            <activation>
+                <jdk>(,11]</jdk>
+            </activation>
+            <properties>
+                <!-- This was the last version to support Java 8, Just for run -->
+                <spotless.version>2.27.1</spotless.version>
+                <!-- To avoid format conflicts -->
+                <spotless.skip>true</spotless.skip>
+            </properties>
+        </profile>
+        <!--
+            This profile enables a check, that uses information from the SBOM generated by the cyclonedx plugin
+            and compares this with the "known dependencies" in the "dependencies.json" file in the root of the project.
+
+            This makes it more obvious, if a PR adds or removes any dependencies.
+        -->
+        <profile>
+            <id>enable-sbom-check</id>
+            <build>
+                <plugins>
+                    <!-- Check if we've changed any dependencies being included -->
+                    <plugin>
+                        <groupId>org.cyclonedx</groupId>
+                        <artifactId>cyclonedx-maven-plugin</artifactId>
+                        <!-- Only run this in the root module of the project -->
+                        <inherited>false</inherited>
+                        <configuration>
+                            <outputName>apache-${project.artifactId}-${project.version}-sbom</outputName>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>makeAggregateBom</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>xml-maven-plugin</artifactId>
+                        <version>1.1.0</version>
+                        <!-- Only run this in the root module of the project -->
+                        <inherited>false</inherited>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>transform</goal>
+                                </goals>
+                                <configuration>
+                                    <transformationSets>
+                                        <transformationSet>
+                                            <dir>${project.basedir}/target/</dir>
+                                            <includes>apache-${project.artifactId}-${project.version}-sbom.xml</includes>
+                                            <stylesheet>src/main/xslt/sbom-filter.xsl</stylesheet>
+                                            <outputDir>${project.basedir}/target/</outputDir>
+                                            <fileMappers>
+                                                <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
+                                                    <targetExtension>transformed.json</targetExtension>
+                                                </fileMapper>
+                                            </fileMappers>
+                                        </transformationSet>
+                                    </transformationSets>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <dependencies>
+                            <dependency>
+                                <groupId>net.sf.saxon</groupId>
+                                <artifactId>Saxon-HE</artifactId>
+                                <version>12.5</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.gmaven</groupId>
+                        <artifactId>groovy-maven-plugin</artifactId>
+                        <version>2.1.1</version>
+                        <!-- Only run this in the root module of the project -->
+                        <inherited>false</inherited>
+                        <executions>
+                            <execution>
+                                <id>compare-with-reference-list</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>execute</goal>
+                                </goals>
+                                <configuration>
+                                    <source>src/main/groovy/checkDependencies.groovy</source>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.apache.groovy</groupId>
+                                <artifactId>groovy</artifactId>
+                                <version>4.0.22</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>get-jar-with-dependencies</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <configuration>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                            <archive>
+                                <manifest>
+                                    <!-- Set main class -->
+                                    <mainClass>io.github.Caideyipi.OpcUaServerRunner</mainClass>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>make-assembly</id>
+                                <!-- bind to the packaging phase -->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <!-- this is used for inheritance merges -->
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>
