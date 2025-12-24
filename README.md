@@ -49,7 +49,7 @@ This SQL will push any IoTDB data to this server, which will reflect on IoTDB pa
 
 ## Parameter Description
 
-The parameters as follows:
+When you start the server, you can also inject some parameters into it. The parameters as follows:
 
 | Parameter                | Description                                      | Default                                |
 |:-------------------------|:-------------------------------------------------|:---------------------------------------|
@@ -61,7 +61,7 @@ The parameters as follows:
 | -security_dir            | Directory to store security certificates.        | ${user.home}/iotdb_opc_server_security |
 | -help                    | Display this help message and exit.              | /                                      |
 
-When you start the server, you can also inject some parameters into it, run this to see the details.
+You can also run this to see the details.
 
 ```shell
 java -jar iotdb_opc_server-0.0.1-jar-with-dependencies.jar -help
