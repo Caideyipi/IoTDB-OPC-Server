@@ -59,7 +59,6 @@ public class OpcUaArgumentsChecker {
 
   private static final String ENABLE_ANONYMOUS_ACCESS_KEY = "enable_anonymous_access";
   private static final boolean ENABLE_ANONYMOUS_ACCESS_DEFAULT_VALUE = true;
-  private static boolean enableAnonymousAccess = ENABLE_ANONYMOUS_ACCESS_DEFAULT_VALUE;
 
   static final String HELP_ARGS = "help";
 
@@ -168,9 +167,6 @@ public class OpcUaArgumentsChecker {
       if (commandLine.hasOption(HELP_ARGS)) {
         hf.printHelp(SCRIPT_HINT, options, true);
         return false;
-      }
-      if (commandLine.hasOption(ENABLE_ANONYMOUS_ACCESS_KEY)) {
-        enableAnonymousAccess = true;
       }
     } catch (final ParseException e) {
       System.out.println("For more information, please check the following hint.");

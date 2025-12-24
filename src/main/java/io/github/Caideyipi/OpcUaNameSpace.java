@@ -153,7 +153,7 @@ public class OpcUaNameSpace extends ManagedNamespaceWithLifecycle {
                   new DataValue(
                       variableAttributes.getValue(),
                       StatusCode.GOOD,
-                      new DateTime(),
+                      new DateTime(0),
                       new DateTime()));
           break;
         case Object:

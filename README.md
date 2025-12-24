@@ -47,19 +47,35 @@ IoTDB> create pipe opc ('sink'='opc-ua-sink', 'node-url'='opc.tcp://<your_ip>:12
 ```
 This SQL will push any IoTDB data to this server, which will reflect on IoTDB paths with the newest data.
 
+### Certificate trust
+
+When a new client touches this server, it won't be able to connect in the first place. Only in this case can a server
+connects with a client:
+- The server trusts the client's certificate.
+- The client trusts the server's certificate.
+- The client use anonymous access to contact with the server, or the username & password match the server's configuration.
+
+Hence, when a OPC Sink client newly connects with the server, you shall move the certificate from reject dir to trust dir:
+```bash
+# package
+mv ${HOME}/iotdb_opc_server_security/pki/rejected/* ${HOME}/iotdb_opc_server_security/pki/trusted/certs
+```
+
+Then you should connect the server again
+
 ## Parameter Description
 
 When you start the server, you can also inject some parameters into it. The parameters as follows:
 
-| Parameter                | Description                                      | Default                                |
-|:-------------------------|:-------------------------------------------------|:---------------------------------------|
-| -https_port              | Https Port                                       | 8443                                   |
-| -tcp_port                | TCP Port.                                        | 12686                                  |
-| -u,--user                | User name                                        | root                                   |
-| -pw,--password           | Password                                         | root                                   |
-| -enable_anonymous_access | Whether to enable anonymous access of OPC Server | true                                   |
-| -security_dir            | Directory to store security certificates.        | ${user.home}/iotdb_opc_server_security |
-| -help                    | Display this help message and exit.              | /                                      |
+| Parameter                | Description                                      | Default                           |
+|:-------------------------|:-------------------------------------------------|:----------------------------------|
+| -https_port              | Https Port                                       | 8443                              |
+| -tcp_port                | TCP Port.                                        | 12686                             |
+| -u,--user                | User name                                        | root                              |
+| -pw,--password           | Password                                         | root                              |
+| -enable_anonymous_access | Whether to enable anonymous access of OPC Server | true                              |
+| -security_dir            | Directory to store security certificates.        | ${HOME}/iotdb_opc_server_security |
+| -help                    | Display this help message and exit.              | /                                 |
 
 You can also run this to see the details.
 
