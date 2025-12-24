@@ -26,9 +26,14 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.eclipse.milo.opcua.stack.core.security.SecurityPolicy;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class OpcUaArgumentsChecker {
 
@@ -60,6 +65,20 @@ public class OpcUaArgumentsChecker {
   private static final String ENABLE_ANONYMOUS_ACCESS_KEY = "enable_anonymous_access";
   private static final boolean ENABLE_ANONYMOUS_ACCESS_DEFAULT_VALUE = true;
 
+  private static final String SECURITY_POLICY_KEY = "security_policy";
+  public static final String SECURITY_POLICY_NONE_VALUE = "NONE";
+  public static final String SECURITY_POLICY_BASIC_128_RSA_15_VALUE = "BASIC128RSA15";
+  public static final String SECURITY_POLICY_BASIC_256_VALUE = "BASIC256";
+  public static final String SECURITY_POLICY_BASIC_256_SHA_256_VALUE = "BASIC256SHA256";
+  public static final String SECURITY_POLICY_AES128_SHA256_RSAOAEP_VALUE = "AES128_SHA256_RSAOAEP";
+  public static final String SECURITY_POLICY_AES256_SHA256_RSAPSS_VALUE = "AES256_SHA256_RSAPSS";
+  private static final Set<SecurityPolicy> SECURITY_POLICY_DEFAULT_VALUE =
+      new HashSet<>(
+          Arrays.asList(
+              SecurityPolicy.Basic256Sha256,
+              SecurityPolicy.Aes128_Sha256_RsaOaep,
+              SecurityPolicy.Aes256_Sha256_RsaPss));
+
   static final String HELP_ARGS = "help";
 
   private static CommandLine commandLine;
@@ -77,7 +96,8 @@ public class OpcUaArgumentsChecker {
           .setUser(USER_DEFAULT_VALUE)
           .setPassword(PASSWORD_DEFAULT_VALUE)
           .setSecurityDir(SECURITY_DIR_DEFAULT_VALUE)
-          .setEnableAnonymousAccess(ENABLE_ANONYMOUS_ACCESS_DEFAULT_VALUE);
+          .setEnableAnonymousAccess(ENABLE_ANONYMOUS_ACCESS_DEFAULT_VALUE)
+          .setSecurityPolicies(SECURITY_POLICY_DEFAULT_VALUE);
     }
     final boolean continues = parseCommandLine(options, args, hf);
     if (!continues) {
@@ -92,7 +112,8 @@ public class OpcUaArgumentsChecker {
         .setHttpsBindPort(getIntOptionOrDefault(HTTPS_BIND_PORT_KEY, HTTPS_BIND_PORT_DEFAULT_VALUE))
         .setEnableAnonymousAccess(
             getBooleanOptionOrDefault(
-                ENABLE_ANONYMOUS_ACCESS_KEY, ENABLE_ANONYMOUS_ACCESS_DEFAULT_VALUE));
+                ENABLE_ANONYMOUS_ACCESS_KEY, ENABLE_ANONYMOUS_ACCESS_DEFAULT_VALUE))
+        .setSecurityPolicies(parseSecurityPolicies(SECURITY_POLICY_KEY));
   }
 
   private static Options createOptions() {
@@ -156,6 +177,16 @@ public class OpcUaArgumentsChecker {
                     String.format(
                         "Whether to enable anonymous access of this server. Default is %s. (optional)",
                         ENABLE_ANONYMOUS_ACCESS_DEFAULT_VALUE))
+                .build())
+        .addOption(
+            Option.builder(SECURITY_POLICY_KEY)
+                .argName(SECURITY_POLICY_KEY)
+                .hasArg(true)
+                .optionalArg(true)
+                .desc(
+                    String.format(
+                        "The supported security policies of the server for the clients to connect. Default are %s. (optional)",
+                        SECURITY_POLICY_DEFAULT_VALUE))
                 .build());
   }
 
@@ -189,5 +220,34 @@ public class OpcUaArgumentsChecker {
   private static boolean getBooleanOptionOrDefault(final String arg, final boolean defaultValue) {
     final String str = commandLine.getOptionValue(arg);
     return Objects.nonNull(str) ? Boolean.parseBoolean(str) : defaultValue;
+  }
+
+  private static Set<SecurityPolicy> parseSecurityPolicies(final String arg) {
+    final String str = commandLine.getOptionValue(arg);
+    return Objects.nonNull(str)
+        ? Arrays.stream(arg.replace(" ", "").split(","))
+            .map(OpcUaArgumentsChecker::getSecurityPolicy)
+            .collect(Collectors.toSet())
+        : SECURITY_POLICY_DEFAULT_VALUE;
+  }
+
+  private static SecurityPolicy getSecurityPolicy(final String securityPolicy) {
+    switch (securityPolicy.toUpperCase()) {
+      case SECURITY_POLICY_NONE_VALUE:
+        return SecurityPolicy.None;
+      case SECURITY_POLICY_BASIC_128_RSA_15_VALUE:
+        return SecurityPolicy.Basic128Rsa15;
+      case SECURITY_POLICY_BASIC_256_VALUE:
+        return SecurityPolicy.Basic256;
+      case SECURITY_POLICY_BASIC_256_SHA_256_VALUE:
+        return SecurityPolicy.Basic256Sha256;
+      case SECURITY_POLICY_AES128_SHA256_RSAOAEP_VALUE:
+        return SecurityPolicy.Aes128_Sha256_RsaOaep;
+      case SECURITY_POLICY_AES256_SHA256_RSAPSS_VALUE:
+        return SecurityPolicy.Aes256_Sha256_RsaPss;
+      default:
+        throw new UnsupportedOperationException(
+            "The security policy can only be 'None', 'Basic128Rsa15', 'Basic256', 'Basic256Sha256', 'Aes128_Sha256_RsaOaep' or 'Aes256_Sha256_RsaPss'.");
+    }
   }
 }

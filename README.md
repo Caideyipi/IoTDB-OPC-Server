@@ -43,13 +43,13 @@ java -jar iotdb_opc_server-0.0.1-jar-with-dependencies.jar
 You can use this SQL in an outer IoTDB in tree model to connect with this server.
 
 ```sql
-IoTDB> create pipe opc ('sink'='opc-ua-sink', 'node-url'='opc.tcp://<your_ip>:12686/iotdb', 'with-quality'='true')
+IoTDB> create pipe opc ('sink'='opc-ua-sink', 'node-url'='opc.tcp://<your_ip>:12686/iotdb', 'with-quality'='true', 'security-policy'='None')
 ```
 This SQL will push any IoTDB data to this server, which will reflect on IoTDB paths with the newest data.
 
 ### Certificate trust
 
-When a new client touches this server, it won't be able to connect in the first place. Only in this case can a server
+When a new client touches this server, and the security policy is not 'None', it won't be able to connect in the first place. Only in this case can a server
 connects with a client:
 - The server trusts the client's certificate.
 - The client trusts the server's certificate.
@@ -88,7 +88,7 @@ When you start the server, you can also inject some parameters into it. The para
 | Parameter                | Description                                      | Default                           |
 |:-------------------------|:-------------------------------------------------|:----------------------------------|
 | -https_port              | Https Port                                       | 8443                              |
-| -tcp_port                | TCP Port.                                        | 12686                             |
+| -tcp_port                | TCP Port                                         | 12686                             |
 | -u,--user                | User name                                        | root                              |
 | -pw,--password           | Password                                         | root                              |
 | -enable_anonymous_access | Whether to enable anonymous access of OPC Server | true                              |
