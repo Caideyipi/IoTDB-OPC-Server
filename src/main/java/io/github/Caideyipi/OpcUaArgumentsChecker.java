@@ -110,10 +110,8 @@ public class OpcUaArgumentsChecker {
         .setSecurityDir(getStringOptionsOrDefault(SECURITY_DIR_KEY, SECURITY_DIR_DEFAULT_VALUE))
         .setTcpBindPort(getIntOptionOrDefault(TCP_BIND_PORT_KEY, TCP_BIND_PORT_DEFAULT_VALUE))
         .setHttpsBindPort(getIntOptionOrDefault(HTTPS_BIND_PORT_KEY, HTTPS_BIND_PORT_DEFAULT_VALUE))
-        .setEnableAnonymousAccess(
-            getBooleanOptionOrDefault(
-                ENABLE_ANONYMOUS_ACCESS_KEY, ENABLE_ANONYMOUS_ACCESS_DEFAULT_VALUE))
-        .setSecurityPolicies(parseSecurityPolicies(SECURITY_POLICY_KEY));
+        .setEnableAnonymousAccess(getEnableAnonymousAccessOrDefault())
+        .setSecurityPolicies(parseSecurityPolicies());
   }
 
   private static Options createOptions() {
@@ -217,15 +215,18 @@ public class OpcUaArgumentsChecker {
     return Objects.nonNull(str) ? Integer.parseInt(str) : defaultValue;
   }
 
-  private static boolean getBooleanOptionOrDefault(final String arg, final boolean defaultValue) {
-    final String str = commandLine.getOptionValue(arg);
-    return Objects.nonNull(str) ? Boolean.parseBoolean(str) : defaultValue;
+  private static boolean getEnableAnonymousAccessOrDefault() {
+    final String str =
+        commandLine.getOptionValue(OpcUaArgumentsChecker.ENABLE_ANONYMOUS_ACCESS_KEY);
+    return Objects.nonNull(str)
+        ? Boolean.parseBoolean(str)
+        : OpcUaArgumentsChecker.ENABLE_ANONYMOUS_ACCESS_DEFAULT_VALUE;
   }
 
-  private static Set<SecurityPolicy> parseSecurityPolicies(final String arg) {
-    final String str = commandLine.getOptionValue(arg);
+  private static Set<SecurityPolicy> parseSecurityPolicies() {
+    final String str = commandLine.getOptionValue(OpcUaArgumentsChecker.SECURITY_POLICY_KEY);
     return Objects.nonNull(str)
-        ? Arrays.stream(arg.replace(" ", "").split(","))
+        ? Arrays.stream(OpcUaArgumentsChecker.SECURITY_POLICY_KEY.replace(" ", "").split(","))
             .map(OpcUaArgumentsChecker::getSecurityPolicy)
             .collect(Collectors.toSet())
         : SECURITY_POLICY_DEFAULT_VALUE;
