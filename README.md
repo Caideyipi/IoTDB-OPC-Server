@@ -37,7 +37,7 @@ mvn clean package -P get-jar-with-dependencies
 cd target
 
 # run server
-java -jar iotdb_opc_server-0.0.1-jar-with-dependencies.jar
+java -jar iotdb_opc_server-0.0.1-jar-with-dependencies.jar -security_policy None
 ```
 
 You can use this SQL in an outer IoTDB in tree model to connect with this server.

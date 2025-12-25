@@ -146,20 +146,19 @@ public class OpcUaArgumentsChecker {
                 .hasArg()
                 .optionalArg(true)
                 .desc(String.format("User name, default is %s. (optional)", USER_DEFAULT_VALUE))
-                .required()
                 .build())
         .addOption(
             Option.builder(PASSWORD_ARGS)
                 .longOpt(PASSWORD_KEY)
                 .argName(PASSWORD_KEY)
-                .hasArg(true)
+                .hasArg()
                 .optionalArg(true)
                 .desc(String.format("Password. Default is %s. (optional)", PASSWORD_DEFAULT_VALUE))
                 .build())
         .addOption(
             Option.builder(SECURITY_DIR_KEY)
                 .argName(SECURITY_DIR_KEY)
-                .hasArg(true)
+                .hasArg()
                 .optionalArg(true)
                 .desc(
                     String.format(
@@ -169,7 +168,7 @@ public class OpcUaArgumentsChecker {
         .addOption(
             Option.builder(ENABLE_ANONYMOUS_ACCESS_KEY)
                 .argName(ENABLE_ANONYMOUS_ACCESS_KEY)
-                .hasArg(true)
+                .hasArg()
                 .optionalArg(true)
                 .desc(
                     String.format(
@@ -179,7 +178,7 @@ public class OpcUaArgumentsChecker {
         .addOption(
             Option.builder(SECURITY_POLICY_KEY)
                 .argName(SECURITY_POLICY_KEY)
-                .hasArg(true)
+                .hasArg()
                 .optionalArg(true)
                 .desc(
                     String.format(
@@ -198,6 +197,7 @@ public class OpcUaArgumentsChecker {
         return false;
       }
     } catch (final ParseException e) {
+      System.out.println(e.getMessage());
       System.out.println("For more information, please check the following hint.");
       hf.printHelp(SCRIPT_HINT, options, true);
       return false;
@@ -226,7 +226,7 @@ public class OpcUaArgumentsChecker {
   private static Set<SecurityPolicy> parseSecurityPolicies() {
     final String str = commandLine.getOptionValue(OpcUaArgumentsChecker.SECURITY_POLICY_KEY);
     return Objects.nonNull(str)
-        ? Arrays.stream(OpcUaArgumentsChecker.SECURITY_POLICY_KEY.replace(" ", "").split(","))
+        ? Arrays.stream(str.replace(" ", "").split(","))
             .map(OpcUaArgumentsChecker::getSecurityPolicy)
             .collect(Collectors.toSet())
         : SECURITY_POLICY_DEFAULT_VALUE;
