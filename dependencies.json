@@ -27,6 +27,7 @@
     "org.eclipse.milo:stack-server",
     "org.glassfish.jaxb:jaxb-runtime",
     "org.glassfish.jaxb:txw2",
+    "org.jline:jline",
     "org.slf4j:slf4j-api"
   ]
 }

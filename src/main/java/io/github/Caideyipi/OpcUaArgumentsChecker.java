@@ -27,12 +27,20 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.eclipse.milo.opcua.stack.core.security.SecurityPolicy;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.terminal.Size;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class OpcUaArgumentsChecker {
@@ -50,7 +58,7 @@ public class OpcUaArgumentsChecker {
 
   private static final String PASSWORD_ARGS = "pw";
   private static final String PASSWORD_KEY = "password";
-  private static final String PASSWORD_DEFAULT_VALUE = "root";
+  private static String PASSWORD_VALUE = "root";
 
   private static final String TCP_BIND_PORT_KEY = "tcp_port";
   private static final int TCP_BIND_PORT_DEFAULT_VALUE = 12686;
@@ -81,9 +89,20 @@ public class OpcUaArgumentsChecker {
 
   static final String HELP_ARGS = "help";
 
+  private static final Set<String> nonPasswordKeywordSet =
+      new HashSet<>(
+          Arrays.asList(
+              "-" + USERNAME_ARGS,
+              "-" + USER_KEY,
+              "-" + TCP_BIND_PORT_KEY,
+              "-" + HTTPS_BIND_PORT_KEY,
+              "-" + SECURITY_DIR_KEY,
+              "-" + ENABLE_ANONYMOUS_ACCESS_KEY,
+              "-" + SECURITY_POLICY_KEY));
+
   private static CommandLine commandLine;
 
-  static OpcUaServerBuilder parseArgs(final String[] args) {
+  static OpcUaServerBuilder parseArgs(final String[] args) throws IOException {
     final Options options = createOptions();
     final HelpFormatter hf = new HelpFormatter();
     hf.setWidth(MAX_HELP_CONSOLE_WIDTH);
@@ -94,11 +113,12 @@ public class OpcUaArgumentsChecker {
           .setTcpBindPort(TCP_BIND_PORT_DEFAULT_VALUE)
           .setHttpsBindPort(HTTPS_BIND_PORT_DEFAULT_VALUE)
           .setUser(USER_DEFAULT_VALUE)
-          .setPassword(PASSWORD_DEFAULT_VALUE)
+          .setPassword(PASSWORD_VALUE)
           .setSecurityDir(SECURITY_DIR_DEFAULT_VALUE)
           .setEnableAnonymousAccess(ENABLE_ANONYMOUS_ACCESS_DEFAULT_VALUE)
           .setSecurityPolicies(SECURITY_POLICY_DEFAULT_VALUE);
     }
+    processPasswordArgs(args);
     final boolean continues = parseCommandLine(options, args, hf);
     if (!continues) {
       System.exit(CODE_ERROR);
@@ -106,7 +126,7 @@ public class OpcUaArgumentsChecker {
 
     return new OpcUaServerBuilder()
         .setUser(getStringOptionsOrDefault(USER_KEY, USER_DEFAULT_VALUE))
-        .setPassword(getStringOptionsOrDefault(PASSWORD_KEY, PASSWORD_DEFAULT_VALUE))
+        .setPassword(getStringOptionsOrDefault(PASSWORD_KEY, PASSWORD_VALUE))
         .setSecurityDir(getStringOptionsOrDefault(SECURITY_DIR_KEY, SECURITY_DIR_DEFAULT_VALUE))
         .setTcpBindPort(getIntOptionOrDefault(TCP_BIND_PORT_KEY, TCP_BIND_PORT_DEFAULT_VALUE))
         .setHttpsBindPort(getIntOptionOrDefault(HTTPS_BIND_PORT_KEY, HTTPS_BIND_PORT_DEFAULT_VALUE))
@@ -153,7 +173,7 @@ public class OpcUaArgumentsChecker {
                 .argName(PASSWORD_KEY)
                 .hasArg()
                 .optionalArg(true)
-                .desc(String.format("Password. Default is %s. (optional)", PASSWORD_DEFAULT_VALUE))
+                .desc(String.format("Password. Default is %s. (optional)", PASSWORD_VALUE))
                 .build())
         .addOption(
             Option.builder(SECURITY_DIR_KEY)
@@ -203,6 +223,46 @@ public class OpcUaArgumentsChecker {
       return false;
     }
     return true;
+  }
+
+  private static void processPasswordArgs(String[] args) throws IOException {
+    int index = -1;
+    for (int i = 0; i < args.length; i++) {
+      if (args[i].equals("-" + PASSWORD_ARGS) || args[i].equals("-" + PASSWORD_KEY)) {
+        index = i;
+        break;
+      }
+    }
+    if (index >= 0) {
+      if (index + 1 >= args.length || nonPasswordKeywordSet.contains(args[index + 1])) {
+        PASSWORD_VALUE = getLineReader().readLine("please input your password:", '\0');
+      }
+    }
+  }
+
+  public static LineReader getLineReader() throws IOException {
+    Logger.getLogger("org.jline").setLevel(Level.OFF);
+
+    // Defaulting to a dumb terminal when a supported terminal can not be correctly created
+    // see https://github.com/jline/jline3/issues/291
+    Terminal terminal = TerminalBuilder.builder().dumb(true).build();
+
+    if (terminal.getWidth() == 0 || terminal.getHeight() == 0) {
+      // Hard coded terminal size when redirecting.
+      terminal.setSize(new Size(120, 40));
+    }
+    Thread executeThread = Thread.currentThread();
+    // Register signal handler. Instead of shutting down the process, interrupt the current thread
+    // when signal INT is received (usually by pressing CTRL+C).
+    terminal.handle(Terminal.Signal.INT, signal -> executeThread.interrupt());
+
+    LineReaderBuilder builder = LineReaderBuilder.builder();
+    builder.terminal(terminal);
+
+    org.jline.reader.impl.DefaultParser parser = new org.jline.reader.impl.DefaultParser();
+    builder.parser(parser);
+
+    return builder.build();
   }
 
   private static String getStringOptionsOrDefault(final String arg, final String defaultValue) {

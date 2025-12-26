@@ -33,6 +33,8 @@ public class OpcUaServerRunner {
       nameSpace.startup();
       server.startup().get();
       Thread.sleep(Long.MAX_VALUE);
+    } catch (final InterruptedException e) {
+      Thread.currentThread().interrupt();
     } finally {
       if (Objects.nonNull(nameSpace)) {
         nameSpace.shutdown();
