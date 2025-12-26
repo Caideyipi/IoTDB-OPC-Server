@@ -240,7 +240,7 @@ public class OpcUaArgumentsChecker {
     }
   }
 
-  public static LineReader getLineReader() throws IOException {
+  private static LineReader getLineReader() throws IOException {
     Logger.getLogger("org.jline").setLevel(Level.OFF);
 
     // Defaulting to a dumb terminal when a supported terminal can not be correctly created
